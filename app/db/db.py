@@ -16,7 +16,6 @@ url = URL.create(
 )
 
 engine = create_engine(url)
-
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 class Base(DeclarativeBase):
@@ -25,7 +24,7 @@ class Base(DeclarativeBase):
 def get_db():
     db = SessionLocal()
     try:
-        print("Conexión abierta")  
+        print("Conexión abierta")
         yield db
     finally:
         db.close()
