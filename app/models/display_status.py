@@ -10,3 +10,6 @@ class Display_status(Base):
     id_content : Mapped[int] = mapped_column(ForeignKey("content.id_content"))
     status : Mapped[str] = mapped_column(Enum("visto", "pendiente", name="status_type"))
 
+    usuario : Mapped["User"] = relationship(back_populates="status")
+    content : Mapped["Content"] = relationship(back_populates= "status")
+

@@ -12,3 +12,6 @@ class Review(Base):
     score : Mapped[int] = mapped_column(Integer)
     comment : Mapped[str] = mapped_column(Text)
     date : Mapped[date] = mapped_column(Date)
+
+    user : Mapped["User"] = relationship(back_populates="review")
+    content : Mapped["Content"] = relationship(back_populates="review")
