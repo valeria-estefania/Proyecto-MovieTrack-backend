@@ -1,73 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.db.db import get_db
-from app.models.content import Content
-from app.schemas.content import ContentCreate, ContentResponse
-from app.utils.tmdb import buscar_en_tmdb, obtener_detalle_tmdb
-from datetime import datetime
+from pydantic import BaseModel
+from pydantic import ConfigDict
+from datetime import date
 
-router = APIRouter(prefix="/content", tags=["Content"])
+class ContentBase(BaseModel):
+    tmdb_id: int
+    title: str
+    description: str
+    type: str
+    release_date: date
+    poster_url: str
+    rating: float
 
-@router.get("/search", response_model=list[ContentResponse])
-def buscar_contenido(query: str, type: str = "movie", db: Session = Depends(get_db)):
-    # 1. Buscar en la BD local primero
-    resultados_locales = db.query(Content).filter(
-        Content.title.ilike(f"%{query}%"),
-        Content.type == type
-    ).all()
+class ContentCreate(ContentBase):
+    pass
 
-    if resultados_locales:
-        return resultados_locales
+class ContentResponse(ContentBase):
+    id_content: int
 
-    # 2. Si no hay resultados locales, buscar en TMDB
-    resultados_tmdb = buscar_en_tmdb(query, type)
-    if not resultados_tmdb:
-        raise HTTPException(status_code=404, detail="No se encontraron resultados")
-
-    # 3. Guardar los resultados de TMDB en la BD y devolverlos
-    nuevos = []
-    for item in resultados_tmdb[:5]:  # guardamos máximo 5
-        # Verificar que no exista ya
-        existe = db.query(Content).filter(Content.tmdb_id == item["id"]).first()
-        if existe:
-            nuevos.append(existe)
-            continue
-
-        title = item.get("title") or item.get("name", "")
-        release = item.get("release_date") or item.get("first_air_date", "1900-01-01")
-
-        nuevo = Content(
-            tmdb_id=item["id"],
-            title=title,
-            description=item.get("overview", ""),
-            type=type,
-            release_date=datetime.strptime(release[:10], "%Y-%m-%d").date() if release else None,
-            poster_url=f"https://image.tmdb.org/t/p/w500{item.get('poster_path', '')}",
-            rating=item.get("vote_average", 0.0)
-        )
-        db.add(nuevo)
-        db.commit()
-        db.refresh(nuevo)
-        nuevos.append(nuevo)
-
-    return nuevos
-
-@router.get("/", response_model=list[ContentResponse])
-def obtener_contenido(db: Session = Depends(get_db)):
-    return db.query(Content).all()
-
-@router.get("/{id_content}", response_model=ContentResponse)
-def obtener_contenido_por_id(id_content: int, db: Session = Depends(get_db)):
-    contenido = db.query(Content).filter(Content.id_content == id_content).first()
-    if not contenido:
-        raise HTTPException(status_code=404, detail="Contenido no encontrado")
-    return contenido
-
-@router.delete("/{id_content}")
-def eliminar_contenido(id_content: int, db: Session = Depends(get_db)):
-    contenido = db.query(Content).filter(Content.id_content == id_content).first()
-    if not contenido:
-        raise HTTPException(status_code=404, detail="Contenido no encontrado")
-    db.delete(contenido)
-    db.commit()
-    return {"message": "Contenido eliminado correctamente"}
+    model_config = ConfigDict(from_attributes=True)

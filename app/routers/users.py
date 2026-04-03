@@ -4,6 +4,7 @@ from app.db.db import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.core.hash import hashear_password
+from app.core.dependencies import get_current_user
 from datetime import date
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -26,7 +27,10 @@ def crear_usuario(user: UserCreate, db: Session = Depends(get_db)):
     return nuevo_usuario
 
 @router.get("/", response_model=list[UserResponse])
-def obtener_usuarios(db: Session = Depends(get_db)):
+def obtener_usuarios(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     return db.query(User).all()
 
 @router.get("/{id_user}", response_model=UserResponse)
@@ -54,7 +58,11 @@ def actualizar_usuario(id_user: int, datos: UserUpdate, db: Session = Depends(ge
     return usuario
 
 @router.delete("/{id_user}")
-def eliminar_usuario(id_user: int, db: Session = Depends(get_db)):
+def eliminar_usuario(
+    id_user: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
     usuario = db.query(User).filter(User.id_user == id_user).first()
     if not usuario:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
