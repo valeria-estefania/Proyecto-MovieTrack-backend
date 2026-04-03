@@ -9,10 +9,7 @@ class Genre(Base):
 
     id_genre: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tmdb_id : Mapped[int] = mapped_column(unique=True)
-    name: Mapped[String] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(50))
 
-    content : Mapped[list["Content"]] = relationship(
-        secondary= content_genre,
-        back_populates= "genre"
-    )
+    content : Mapped[list["Content"]] = relationship(secondary= content_genre,back_populates= "genre")
     
