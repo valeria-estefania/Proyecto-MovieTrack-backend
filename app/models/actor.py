@@ -8,7 +8,7 @@ class Actor(Base):
 
     id_actor: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     tmdb_id : Mapped[int] = mapped_column(unique=True)
-    name: Mapped[String] = mapped_column(String(50))
-    photo_url: Mapped[String] = mapped_column(String(400))
+    name: Mapped[str] = mapped_column(String(50))
+    photo_url: Mapped[str] = mapped_column(String(400))
     
     cast: Mapped[list['Cast']] = relationship(back_populates='actor')

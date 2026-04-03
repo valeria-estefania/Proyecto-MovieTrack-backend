@@ -10,9 +10,5 @@ class Platform(Base):
     nombre : Mapped[str] = mapped_column(String(100))
     logo_url : Mapped[str] = mapped_column(String(300))
 
-    content : Mapped[list["Content"]] = relationship (
-        secondary= content_platform,
-        back_populates= "platform"
-
-    )
+    content : Mapped[list["Content"]] = relationship (secondary= content_platform,back_populates= "platform")
 
