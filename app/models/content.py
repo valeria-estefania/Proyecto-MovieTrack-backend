@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.db.db import Base
+from db.db import Base
 from sqlalchemy import String,Enum,Date,ForeignKey,Column,Table, Integer
 from datetime import date
 
@@ -23,11 +23,11 @@ class Content(Base):
 
     id_content: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     tmdb_id: Mapped[int] = mapped_column(unique=True)
-    title: Mapped[String] = mapped_column(String(255))
-    description: Mapped[String]= mapped_column(String(255))
-    type: Mapped[String] = mapped_column(Enum("movie", "tv", name="tipo_contenido"))
+    title: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str]= mapped_column(String(255))
+    type: Mapped[str] = mapped_column(Enum("movie", "tv", name="tipo_contenido"))
     release_date:  Mapped[date] = mapped_column(Date)
-    poster_url: Mapped[String] = mapped_column(String(500))
+    poster_url: Mapped[str] = mapped_column(String(500))
     rating: Mapped[float] = mapped_column()
 
 
