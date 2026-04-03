@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Integer, Text, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from app.db.db import Base
+from db.db import Base
 from datetime import date
 
 class Review(Base):
@@ -11,7 +11,7 @@ class Review(Base):
     id_content : Mapped[int] = mapped_column(ForeignKey("content.id_content"))
     score : Mapped[int] = mapped_column(Integer)
     comment : Mapped[str] = mapped_column(Text)
-    date : Mapped[date] = mapped_column(Date)
+    date_review : Mapped[date] = mapped_column(Date)
 
     user : Mapped["User"] = relationship(back_populates="review")
     content : Mapped["Content"] = relationship(back_populates="review")
