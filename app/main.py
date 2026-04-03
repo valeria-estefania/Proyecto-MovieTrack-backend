@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from app.db.db import engine, Base
-from app.routers import users, auth, content, favorites, status, reviews
-import app.models
+from db.db import engine, Base
+from routers import users, auth, content, favorites, status, reviews
+import models
 
 app = FastAPI(title="MovieTrack API")
 

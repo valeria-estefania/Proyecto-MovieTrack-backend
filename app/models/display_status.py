@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Enum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from app.db.db import Base
+from db.db import Base
 
 class Display_status(Base):
     __tablename__ = "display_status"

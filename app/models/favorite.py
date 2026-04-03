@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from app.db.db import Base
+from db.db import Base
 from datetime import date
 
 class Favorite(Base):

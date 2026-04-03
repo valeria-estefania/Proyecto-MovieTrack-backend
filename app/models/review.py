@@ -1,6 +1,6 @@
 from sqlalchemy import ForeignKey, Integer, Text, Date
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-from app.db.db import Base
+from db.db import Base
 from datetime import date
 
 class Review(Base):
