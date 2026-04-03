@@ -8,7 +8,8 @@ from app.utils.tmdb import buscar_en_tmdb
 from datetime import datetime
 
 router = APIRouter(prefix="/content", tags=["Content"])
-
+  
+  # Busca en nuestra base de datos
 @router.get("/search", response_model=list[ContentResponse])
 def buscar_contenido(query: str, type: str = "movie", db: Session = Depends(get_db)):
     resultados_locales = db.query(Content).filter(
