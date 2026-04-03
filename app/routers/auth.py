@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from app.db.db import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.hash import hashear_password, verificar_password
+from app.core.jwt import crear_token
 import datetime
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -20,7 +21,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     nuevo_user = User(
         name=user.name,
         email=user.email,
-        password_hash=hash_password(user.password),
+        password_hash=hashear_password(user.password),
         fecha_registro=datetime.date.today()
     )
     db.add(nuevo_user)
@@ -37,11 +38,11 @@ def login(credenciales: UserLogin, db: Session = Depends(get_db)):
             detail="Credenciales incorrectas"
         )
 
-    if not verify_password(credenciales.password, user.password_hash):
+    if not verificar_password(credenciales.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas"
         )
 
-    token = create_access_token(data={"sub": str(user.id_user)})
+    token = crear_token(data={"sub": str(user.id_user)})
     return {"access_token": token, "token_type": "bearer"}
