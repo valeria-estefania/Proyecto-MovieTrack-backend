@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.db.db import get_db
-from app.models.review import Review
-from app.schemas.review import ReviewCreate, ReviewResponse
-from app.core.dependencies import get_current_user
+from db.db import get_db
+from models.review import Review
+from schemas.review import ReviewCreate, ReviewResponse
+from core.dependencies import get_current_user
 from datetime import date
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])

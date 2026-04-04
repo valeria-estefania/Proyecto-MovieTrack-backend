@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.db.db import get_db
-from app.models.display_status import Display_status
-from app.schemas.display_status import DisplayStatusCreate, DisplayStatusResponse
-from app.core.dependencies import get_current_user
+from db.db import get_db
+from models.display_status import Display_status
+from schemas.display_status import DisplayStatusCreate, DisplayStatusResponse
+from core.dependencies import get_current_user
 
 router = APIRouter(prefix="/status", tags=["Status"])
 

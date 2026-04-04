@@ -20,7 +20,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     nuevo_user = User(
         name=user.name,
         email=user.email,
-        password_hash=hashear_password(user.password),
+        password=hash_password(user.password),
         fecha_registro=datetime.date.today()
     )
     db.add(nuevo_user)
@@ -37,11 +37,11 @@ def login(credenciales: UserLogin, db: Session = Depends(get_db)):
             detail="Credenciales incorrectas"
         )
 
-    if not verificar_password(credenciales.password, user.password_hash):
+    if not verify_password(credenciales.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Credenciales incorrectas"
         )
 
-    token = crear_token(data={"sub": str(user.id_user)})
+    token = create_access_token(data={"sub": str(user.id_user)})
     return {"access_token": token, "token_type": "bearer"}

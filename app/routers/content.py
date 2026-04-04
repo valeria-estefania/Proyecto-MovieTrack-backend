@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.db.db import get_db
-from app.models.content import Content
-from app.schemas.content import ContentCreate, ContentResponse
-from app.core.dependencies import get_current_user
-from app.utils.tmdb import buscar_en_tmdb
+from db.db import get_db
+from models.content import Content
+from schemas.content import ContentCreate, ContentResponse
+from core.dependencies import get_current_user
+from utils.tmdb import buscar_en_tmdb
 from datetime import datetime
 
 router = APIRouter(prefix="/content", tags=["Content"])
