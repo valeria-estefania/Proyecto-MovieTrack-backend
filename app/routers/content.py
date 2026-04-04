@@ -73,3 +73,4 @@ def eliminar_contenido(
     db.delete(contenido)
     db.commit()
     return {"message": "Contenido eliminado correctamente"}
+
