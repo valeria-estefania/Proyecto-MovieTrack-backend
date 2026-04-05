@@ -6,12 +6,15 @@ from schemas.content import ContentCreate, ContentResponse
 from core.dependencies import get_current_user
 from utils.tmdb import buscar_en_tmdb
 from datetime import datetime
+from services.platform_services import get_o_guardar_plataformas
+from services.content_services import obtener_recomendaciones
+from schemas.platform import PlatformResponse
 
 router = APIRouter(prefix="/content", tags=["Content"])
-  
-  # Busca en nuestra base de datos
+
+# Busca en nuestra base de datos
 @router.get("/search/movies", response_model=list[ContentResponse])
-def buscar_contenido(query: str, type: str = "movie", db: Session = Depends(get_db)):
+def buscar_peliculas(query: str, type: str = "movie", db: Session = Depends(get_db)):
     resultados_locales = db.query(Content).filter(
         Content.title.ilike(f"%{query}%"),
         Content.type == type
@@ -50,9 +53,70 @@ def buscar_contenido(query: str, type: str = "movie", db: Session = Depends(get_
 
     return nuevos
 
+
+# Busca en nuestra base de datos
+@router.get("/search/series", response_model=list[ContentResponse])
+def buscar_series(query: str, type: str = "tv", db: Session = Depends(get_db)):
+    resultados_locales = db.query(Content).filter(
+        Content.title.ilike(f"%{query}%"),
+        Content.type == type
+    ).all()
+
+    if resultados_locales:
+        return resultados_locales
+
+    resultados_tmdb = buscar_en_tmdb(query, type)
+    if not resultados_tmdb:
+        raise HTTPException(status_code=404, detail="No se encontraron resultados")
+
+    nuevos = []
+    for item in resultados_tmdb[:5]:
+        existe = db.query(Content).filter(Content.tmdb_id == item["id"]).first()
+        if existe:
+            nuevos.append(existe)
+            continue
+
+        title = item.get("title") or item.get("name", "")
+        release = item.get("release_date") or item.get("first_air_date", "1900-01-01")
+
+        nuevo = Content(
+            tmdb_id=item["id"],
+            title=title,
+            description=item.get("overview", ""),
+            type=type,
+            release_date=datetime.strptime(release[:10], "%Y-%m-%d").date() if release else None,
+            poster_url=f"https://image.tmdb.org/t/p/w500{item.get('poster_path', '')}",
+            rating=item.get("vote_average", 0.0)
+        )
+        db.add(nuevo)
+        db.commit()
+        db.refresh(nuevo)
+        nuevos.append(nuevo)
+
+    return nuevos
+
+
 @router.get("/", response_model=list[ContentResponse])
 def obtener_contenido(db: Session = Depends(get_db)):
     return db.query(Content).all()
+
+
+# ✅ Subrutas específicas ANTES que /{id_content}
+@router.get("/{id_content}/plataformas", response_model=list[PlatformResponse])
+def get_plataformas(id_content: int, db: Session = Depends(get_db)):
+    content = db.query(Content).filter(Content.id_content == id_content).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Contenido no encontrado")
+    return get_o_guardar_plataformas(db, content.id_content, content.tmdb_id)
+
+
+@router.get("/{id_content}/recomendaciones", response_model=list[ContentResponse])
+def get_recomendaciones(id_content: int, db: Session = Depends(get_db)):
+    content = db.query(Content).filter(Content.id_content == id_content).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Contenido no encontrado")
+    return obtener_recomendaciones(content.tmdb_id)
+
 
 @router.get("/{id_content}", response_model=ContentResponse)
 def obtener_contenido_por_id(id_content: int, db: Session = Depends(get_db)):
@@ -60,6 +124,7 @@ def obtener_contenido_por_id(id_content: int, db: Session = Depends(get_db)):
     if not contenido:
         raise HTTPException(status_code=404, detail="Contenido no encontrado")
     return contenido
+
 
 @router.delete("/{id_content}")
 def eliminar_contenido(
@@ -73,55 +138,3 @@ def eliminar_contenido(
     db.delete(contenido)
     db.commit()
     return {"message": "Contenido eliminado correctamente"}
-
-
-
-  
-  # Busca en nuestra base de datos
-@router.get("/search1/series", response_model=list[ContentResponse])
-def buscar_contenido(query: str, type: str = "tv", db: Session = Depends(get_db)):
-    resultados_locales = db.query(Content).filter(
-        Content.title.ilike(f"%{query}%"),
-        Content.type == type
-    ).all()
-
-    if resultados_locales:
-        return resultados_locales
-
-    resultados_tmdb = buscar_en_tmdb(query, type)
-    if not resultados_tmdb:
-        raise HTTPException(status_code=404, detail="No se encontraron resultados")
-
-    nuevos = []
-    for item in resultados_tmdb[:5]:
-        existe = db.query(Content).filter(Content.tmdb_id == item["id"]).first()
-        if existe:
-            nuevos.append(existe)
-            continue
-
-        title = item.get("title") or item.get("name", "")
-        release = item.get("release_date") or item.get("first_air_date", "1900-01-01")
-
-        nuevo = Content(
-            tmdb_id=item["id"],
-            title=title,
-            description=item.get("overview", ""),
-            type=type,
-            release_date=datetime.strptime(release[:10], "%Y-%m-%d").date() if release else None,
-            poster_url=f"https://image.tmdb.org/t/p/w500{item.get('poster_path', '')}",
-            rating=item.get("vote_average", 0.0)
-        )
-        db.add(nuevo)
-        db.commit()
-        db.refresh(nuevo)
-        nuevos.append(nuevo)
-
-    return nuevos
-
-
-@router.get("/search2/series", response_model=ContentResponse)
-def buscar_contenido(query: str, type: str = "tv", db: Session = Depends(get_db)):
-    resultados_locales = db.query(Content).filter(
-        Content.title.ilike(f"%{query}%"),
-        Content.type == type
-    ).all()

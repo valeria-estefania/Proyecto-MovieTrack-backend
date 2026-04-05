@@ -1,65 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.db import get_db
-from models.user import User
-from schemas.user import UserCreate, UserResponse, UserUpdate
-from core.hash import hashear_password
-from datetime import date
+from models.content import Content
+from services.actor_services import get_o_guardar_actores
+from schemas.cast import CastResponse
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/actors", tags=["Actors"])
 
-@router.post("/", response_model=UserResponse)
-def crear_usuario(user: UserCreate, db: Session = Depends(get_db)):
-    # Verificar si el email ya existe
-    existe = db.query(User).filter(User.email == user.email).first()
-    if existe:
-        raise HTTPException(status_code=400, detail="El email ya está registrado")
-
-    nuevo_usuario = User(
-        name=user.name,
-        email=user.email,
-        password=hashear_password(user.password),
-        fecha_registro=date.today()
-    )
-    db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)
-    return nuevo_usuario
-
-@router.get("/", response_model=list[UserResponse])
-def obtener_usuarios(db: Session = Depends(get_db)):
-    return db.query(User).all()
-
-@router.get("/{id_user}", response_model=UserResponse)
-def obtener_usuario(id_user: int, db: Session = Depends(get_db)):
-    usuario = db.query(User).filter(User.id_user == id_user).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return usuario
-
-@router.patch("/{id_user}", response_model=UserResponse)
-def actualizar_usuario(id_user: int, datos: UserUpdate, db: Session = Depends(get_db)):
-    usuario = db.query(User).filter(User.id_user == id_user).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    if datos.name:
-        usuario.name = datos.name
-    if datos.email:
-        usuario.email = datos.email
-    if datos.password:
-        usuario.password = hashear_password(datos.password)
-
-    db.commit()
-    db.refresh(usuario)
-    return usuario
-
-@router.delete("/{id_user}")
-def eliminar_usuario(id_user: int, db: Session = Depends(get_db)):
-    usuario = db.query(User).filter(User.id_user == id_user).first()
-    if not usuario:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-
-    db.delete(usuario)
-    db.commit()
-    return {"message": "Usuario eliminado correctamente"}
+@router.get("/{tmdb_id}", response_model=list[CastResponse])
+def get_actores(tmdb_id: int, db: Session = Depends(get_db)):
+    content = db.query(Content).filter(Content.tmdb_id == tmdb_id).first()
+    if not content:
+        raise HTTPException(status_code=404, detail="Contenido no encontrado")
+    return get_o_guardar_actores(db, content.id_content, tmdb_id)
