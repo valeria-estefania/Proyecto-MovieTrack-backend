@@ -7,9 +7,15 @@ from routers.content import router as content_router
 from routers.favorites import router as favorites_router
 from routers.status import router as status_router
 from routers.reviews import router as reviews_router
-
+from fastapi.middleware.cors import CORSMiddleware 
 app = FastAPI(title="MovieTrack API")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # en producción cambia * por tu dominio
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 Base.metadata.create_all(bind=engine)
 
 app.include_router(user_router)

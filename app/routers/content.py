@@ -101,7 +101,7 @@ def obtener_contenido(db: Session = Depends(get_db)):
     return db.query(Content).all()
 
 
-# ✅ Subrutas específicas ANTES que /{id_content}
+#  Subrutas específicas ANTES que /{id_content}
 @router.get("/{id_content}/plataformas", response_model=list[PlatformResponse])
 def get_plataformas(id_content: int, db: Session = Depends(get_db)):
     content = db.query(Content).filter(Content.id_content == id_content).first()
