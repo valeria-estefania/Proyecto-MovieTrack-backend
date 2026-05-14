@@ -3,8 +3,6 @@ from db.db import Base
 from sqlalchemy import String,Enum,Date,ForeignKey,Column,Table, Integer
 from datetime import date
 
-
-
 content_genre=Table(
     "content_genre",
     Base.metadata,
@@ -24,11 +22,11 @@ class Content(Base):
     id_content: Mapped[int] = mapped_column(primary_key=True,autoincrement=True)
     tmdb_id: Mapped[int] = mapped_column(unique=True)
     title: Mapped[str] = mapped_column(String(255))
-    description: Mapped[str]= mapped_column(String(255))
+    description: Mapped[str | None ]= mapped_column(String(255))
     type: Mapped[str] = mapped_column(Enum("movie", "tv", name="tipo_contenido"))
-    release_date:  Mapped[date] = mapped_column(Date)
-    poster_url: Mapped[str] = mapped_column(String(500))
-    rating: Mapped[float] = mapped_column()
+    release_date:  Mapped[date | None ] = mapped_column(Date)
+    poster_url: Mapped[str | None ] = mapped_column(String(500))
+    rating: Mapped[float | None ] = mapped_column()
 
 
     genre : Mapped[list["Genre"]] = relationship(secondary=content_genre,  back_populates="content")

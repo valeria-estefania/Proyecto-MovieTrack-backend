@@ -5,6 +5,7 @@ from models.user import User
 from schemas.user import UserCreate, UserLogin, UserResponse, Token
 from core.security import hash_password, verify_password, create_access_token
 import datetime
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -28,35 +29,14 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(nuevo_user)
     return nuevo_user
 
-# @router.post("/login", response_model=Token)
-# def login(credenciales: UserLogin, db: Session = Depends(get_db)):
-#     user = db.query(User).filter(User.email == credenciales.email).first()
-#     if not user:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Credenciales incorrectas"
-#         )
-
-#     if not verify_password(credenciales.password, user.password):
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Credenciales incorrectas"
-#         )
-
-#     token = create_access_token(data={"sub": str(user.id_user)})
-#     return {"access_token": token, "token_type": "bearer"}
-
-
-from fastapi.security import OAuth2PasswordRequestForm
-
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     
     user = db.query(User).filter(User.email == form_data.username).first()
 
-    if not user or not verify_password(form_data.password, user.password):
+    if not user or not verificar_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
 
-    token = create_access_token(data={"sub": str(user.id_user)})
+    token = crear_token(data={"sub": str(user.id_user)})
 
     return {"access_token": token, "token_type": "bearer"}

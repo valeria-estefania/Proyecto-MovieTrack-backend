@@ -14,7 +14,7 @@ def agregar_status(
     current_user: dict = Depends(get_current_user)
 ):
     existe = db.query(Display_status).filter(
-        Display_status.id_user == current_user["id_user"],
+        Display_status.id_user == int(current_user["sub"]),
         Display_status.id_content == data.id_content
     ).first()
 
@@ -25,7 +25,7 @@ def agregar_status(
         return existe
 
     nuevo = Display_status(
-        id_user=current_user["id_user"],
+        id_user=int(current_user["sub"]),
         id_content=data.id_content,
         status=data.status
     )
@@ -40,7 +40,7 @@ def obtener_status(
     current_user: dict = Depends(get_current_user)
 ):
     return db.query(Display_status).filter(
-        Display_status.id_user == current_user["id_user"]
+        Display_status.id_user == int(current_user["sub"])
     ).all()
 
 @router.delete("/{id_status}")
@@ -51,7 +51,7 @@ def eliminar_status(
 ):
     status = db.query(Display_status).filter(
         Display_status.id_status == id_status,
-        Display_status.id_user == current_user["id_user"]
+        Display_status.id_user == int(current_user["sub"])
     ).first()
     if not status:
         raise HTTPException(status_code=404, detail="Status no encontrado")

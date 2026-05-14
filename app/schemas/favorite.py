@@ -6,7 +6,7 @@ class FavoriteBase(BaseModel):
     id_content: int
 
 class FavoriteCreate(FavoriteBase):
-    date_added: date
+    pass
 
 class FavoriteResponse(FavoriteBase):
     id_favorite: int

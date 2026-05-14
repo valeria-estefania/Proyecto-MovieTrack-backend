@@ -15,14 +15,14 @@ def agregar_favorito(
     current_user: dict = Depends(get_current_user)
 ):
     existe = db.query(Favorite).filter(
-        Favorite.id_user == current_user["id_user"],
+        Favorite.id_user == int(current_user["sub"]),
         Favorite.id_content == favorito.id_content
     ).first()
     if existe:
         raise HTTPException(status_code=400, detail="Ya está en favoritos")
 
     nuevo = Favorite(
-        id_user=current_user["id_user"],
+        id_user= int(current_user["sub"]),
         id_content=favorito.id_content,
         date_added=date.today()
     )
@@ -37,7 +37,7 @@ def obtener_favoritos(
     current_user: dict = Depends(get_current_user)
 ):
     return db.query(Favorite).filter(
-        Favorite.id_user == current_user["id_user"]
+        Favorite.id_user == int(current_user["sub"])
     ).all()
 
 @router.delete("/{id_favorite}")
@@ -48,7 +48,7 @@ def eliminar_favorito(
 ):
     favorito = db.query(Favorite).filter(
         Favorite.id_favorite == id_favorite,
-        Favorite.id_user == current_user["id_user"]
+        Favorite.id_user == int(current_user["sub"])
     ).first()
     if not favorito:
         raise HTTPException(status_code=404, detail="Favorito no encontrado")

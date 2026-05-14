@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from db.db import Base
-from sqlalchemy import String,Date
+from app.db.db import Base
+from sqlalchemy import String, Date, Enum
 from datetime import date
 
 class User(Base):
@@ -9,8 +9,13 @@ class User(Base):
     id_user: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(150), unique=True)
-    password: Mapped[str] = mapped_column("password_hash", String(250))
+    password_hash: Mapped[str] = mapped_column( String(250))
     fecha_registro: Mapped[date] = mapped_column(Date)
+    role: Mapped[str] = mapped_column(
+        Enum("user", "admin", name="user_role"),
+        default="user",
+        server_default="user"
+    )
 
     favorite: Mapped[list["Favorite"]] = relationship(back_populates="user")
     status: Mapped[list["Display_status"]] = relationship(back_populates="user")
