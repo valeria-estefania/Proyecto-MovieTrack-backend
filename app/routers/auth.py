@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from db.db import get_db
-from models.user import User
-from schemas.user import UserCreate, UserLogin, UserResponse, Token
-from core.security import hash_password, verify_password, create_access_token
+from app.db.db import get_db
+from app.models.user import User
+from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
+from app.core.hash import hashear_password, verificar_password
+from app.core.jwt import crear_token
 import datetime
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -21,7 +22,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     nuevo_user = User(
         name=user.name,
         email=user.email,
-        password=hash_password(user.password),
+        password_hash=hashear_password(user.password),
         fecha_registro=datetime.date.today()
     )
     db.add(nuevo_user)

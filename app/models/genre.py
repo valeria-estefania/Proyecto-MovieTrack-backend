@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from db.db import Base
+from app.db.db import Base
 from sqlalchemy import String,Date
 from datetime import date
-from models.content import content_genre
+from app.models.content import content_genre
 
 class Genre(Base):
     __tablename__="genre"

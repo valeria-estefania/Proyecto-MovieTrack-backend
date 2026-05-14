@@ -37,7 +37,7 @@ def actualizar_perfil(
     if datos.email:
         usuario.email = datos.email
     if datos.password:
-        usuario.password_hash = hashear_password(datos.password)  
+        usuario.password_hash = hashear_password(datos.password)  # ✓ corregido
 
     db.commit()
     db.refresh(usuario)
