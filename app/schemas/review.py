@@ -9,6 +9,10 @@ class ReviewBase(BaseModel):
 class ReviewCreate(ReviewBase):
     id_content: int
 
+class ReviewUpdate(BaseModel):
+    score: int | None = None
+    comment: str | None = None
+
 class ReviewResponse(ReviewBase):
     id_review: int
     id_content: int

@@ -5,11 +5,11 @@ from datetime import date
 class ContentBase(BaseModel):
     tmdb_id: int
     title: str
-    description: str
+    description: str | None = None
     type: str
-    release_date: date
-    poster_url: str
-    rating: float
+    release_date: date | None = None
+    poster_url: str | None = None
+    rating: float | None = None
 
 class ContentCreate(ContentBase):
     pass

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from db.db import get_db
-from models.review import Review
-from schemas.review import ReviewCreate, ReviewResponse
-from core.dependencies import get_current_user
+from app.db.db import get_db
+from app.models.review import Review
+from app.schemas.review import ReviewCreate, ReviewResponse, ReviewUpdate
+from app.core.dependencies import get_current_user
 from datetime import date
 
 router = APIRouter(prefix="/reviews", tags=["Reviews"])
@@ -15,14 +15,14 @@ def crear_review(
     current_user: dict = Depends(get_current_user)
 ):
     existe = db.query(Review).filter(
-        Review.id_user == current_user["id_user"],
+        Review.id_user == int(current_user["sub"]),
         Review.id_content == data.id_content
     ).first()
     if existe:
         raise HTTPException(status_code=400, detail="Ya tienes una reseña para este contenido")
 
     nueva = Review(
-        id_user=current_user["id_user"],
+        id_user=int(current_user["sub"]),
         id_content=data.id_content,
         score=data.score,
         comment=data.comment,
@@ -33,18 +33,41 @@ def crear_review(
     db.refresh(nueva)
     return nueva
 
-@router.get("/content/{id_content}", response_model=list[ReviewResponse])
-def obtener_reviews_por_contenido(id_content: int, db: Session = Depends(get_db)):
-    return db.query(Review).filter(Review.id_content == id_content).all()
-
 @router.get("/my", response_model=list[ReviewResponse])
 def obtener_mis_reviews(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
     return db.query(Review).filter(
-        Review.id_user == current_user["id_user"]
+        Review.id_user == int(current_user["sub"])
     ).all()
+
+@router.patch("/{id_review}", response_model=ReviewResponse)
+def editar_review(
+    id_review: int,
+    datos: ReviewUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    review = db.query(Review).filter(
+        Review.id_review == id_review,
+        Review.id_user == int(current_user["sub"])
+    ).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Reseña no encontrada")
+
+    if datos.score is not None:
+        review.score = datos.score
+    if datos.comment is not None:
+        review.comment = datos.comment
+
+    db.commit()
+    db.refresh(review)
+    return review
+
+@router.get("/content/{id_content}", response_model=list[ReviewResponse])
+def obtener_reviews_por_contenido(id_content: int, db: Session = Depends(get_db)):
+    return db.query(Review).filter(Review.id_content == id_content).all()
 
 @router.delete("/{id_review}")
 def eliminar_review(
@@ -54,7 +77,7 @@ def eliminar_review(
 ):
     review = db.query(Review).filter(
         Review.id_review == id_review,
-        Review.id_user == current_user["id_user"]
+        Review.id_user == int(current_user["sub"])
     ).first()
     if not review:
         raise HTTPException(status_code=404, detail="Reseña no encontrada")

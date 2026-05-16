@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / ".env")
 
 TMDB_API_KEY = os.getenv("TMDB_API_KEY")
 TMDB_BASE_URL = "https://api.themoviedb.org/3"
@@ -13,17 +13,50 @@ HEADERS = {
     "accept": "application/json"
 }
 
-def buscar_en_tmdb(query: str, type: str = "movie") -> list:
-    endpoint = "movie" if type == "movie" else "tv"
-    url = f"{TMDB_BASE_URL}/search/{endpoint}"
+def buscar_peliculas(query: str) -> list:
+    url = f"{TMDB_BASE_URL}/search/movie"
     params = {"query": query, "language": "es-ES"}
     response = httpx.get(url, headers=HEADERS, params=params)
-    data = response.json()
-    return data.get("results", [])
+    return response.json().get("results", [])
 
-def obtener_detalle_tmdb(tmdb_id: int, type: str = "movie") -> dict:
-    endpoint = "movie" if type == "movie" else "tv"
-    url = f"{TMDB_BASE_URL}/{endpoint}/{tmdb_id}"
+def buscar_series(query: str) -> list:
+    url = f"{TMDB_BASE_URL}/search/tv"
+    params = {"query": query, "language": "es-ES"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def detalle_pelicula(tmdb_id: int) -> dict:
+    url = f"{TMDB_BASE_URL}/movie/{tmdb_id}"
     params = {"language": "es-ES"}
     response = httpx.get(url, headers=HEADERS, params=params)
     return response.json()
+
+def detalle_serie(tmdb_id: int) -> dict:
+    url = f"{TMDB_BASE_URL}/tv/{tmdb_id}"
+    params = {"language": "es-ES"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json()
+
+def actores_pelicula(tmdb_id: int) -> list:
+    url = f"{TMDB_BASE_URL}/movie/{tmdb_id}/credits"
+    params = {"language": "es-ES"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("cast", [])
+
+def generos_peliculas() -> list:
+    url = f"{TMDB_BASE_URL}/genre/movie/list"
+    params = {"language": "es-ES"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("genres", [])
+
+def plataformas_pelicula(tmdb_id: int) -> dict:
+    url = f"{TMDB_BASE_URL}/movie/{tmdb_id}/watch/providers"
+    response = httpx.get(url, headers=HEADERS)
+    resultados = response.json().get("results", {})
+    return resultados.get("CO", resultados.get("US", {}))
+
+def recomendaciones_pelicula(tmdb_id: int) -> list:
+    url = f"{TMDB_BASE_URL}/movie/{tmdb_id}/recommendations"
+    params = {"language": "es-ES"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
