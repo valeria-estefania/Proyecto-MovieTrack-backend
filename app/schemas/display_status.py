@@ -1,14 +1,20 @@
 from pydantic import BaseModel
 from pydantic import ConfigDict
+from enum import Enum
+
+class StatusEnum(str, Enum):
+    visto = "visto"
+    no_visto = "no visto"
+    pendiente = "pendiente"
 
 class DisplayStatusBase(BaseModel):
-    status: str  # "visto" | "pendiente"
+    id_content: int
+    status: StatusEnum
 
 class DisplayStatusCreate(DisplayStatusBase):
-    id_content: int
+    pass
 
 class DisplayStatusResponse(DisplayStatusBase):
     id_status: int
-    id_content: int
 
     model_config = ConfigDict(from_attributes=True)

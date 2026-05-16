@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.db import get_db
 from app.models.content import Content
-from app.schemas.content import ContentCreate, ContentResponse
-from app.core.dependencies import get_current_user
+from app.models.genre import Genre
+from app.models.platform import Platform
+from app.schemas.content import ContentResponse
+from app.core.dependencies import get_current_user, verify_admin
 from app.utils.tmdb import (
     buscar_peliculas, buscar_series,
     detalle_pelicula, detalle_serie,
@@ -11,10 +13,9 @@ from app.utils.tmdb import (
     plataformas_pelicula, recomendaciones_pelicula
 )
 from datetime import datetime
-from app.models.genre import Genre
-from app.models.platform import Platform
 
 router = APIRouter(prefix="/content", tags=["Content"])
+
 
 # ── Filtros avanzados ───────────────────────────────────
 @router.get("/filter", response_model=list[ContentResponse])
@@ -40,16 +41,15 @@ def filtrar_contenido(
         )
 
     resultados = query.all()
-
     if not resultados:
         raise HTTPException(status_code=404, detail="No se encontraron resultados")
 
     return resultados
 
- # ── Buscar películas ────────────────────────────────────
+
+# ── Buscar películas ────────────────────────────────────
 @router.get("/search/movie", response_model=list[ContentResponse])
 def buscar_movie(query: str, db: Session = Depends(get_db)):
-    # 1. Busca en nuestra BD primero
     locales = db.query(Content).filter(
         Content.title.ilike(f"%{query}%"),
         Content.type == "movie"
@@ -57,12 +57,10 @@ def buscar_movie(query: str, db: Session = Depends(get_db)):
     if locales:
         return locales
 
-    # 2. Si no está, busca en TMDB
     resultados = buscar_peliculas(query)
     if not resultados:
         raise HTTPException(status_code=404, detail="No se encontraron películas")
 
-    # 3. Guarda en nuestra BD y devuelve
     nuevos = []
     for item in resultados[:5]:
         existe = db.query(Content).filter(Content.tmdb_id == item["id"]).first()
@@ -70,7 +68,7 @@ def buscar_movie(query: str, db: Session = Depends(get_db)):
             nuevos.append(existe)
             continue
 
-        release = item.get("release_date", "1900-01-01")
+        release = item.get("release_date", "")
         nuevo = Content(
             tmdb_id=item["id"],
             title=item.get("title", ""),
@@ -81,6 +79,13 @@ def buscar_movie(query: str, db: Session = Depends(get_db)):
             rating=item.get("vote_average", 0.0)
         )
         db.add(nuevo)
+        db.flush()
+
+        for genre_id in item.get("genre_ids", []):
+            genero = db.query(Genre).filter(Genre.tmdb_id == genre_id).first()
+            if genero:
+                nuevo.genre.append(genero)
+
         db.commit()
         db.refresh(nuevo)
         nuevos.append(nuevo)
@@ -91,7 +96,6 @@ def buscar_movie(query: str, db: Session = Depends(get_db)):
 # ── Buscar series ───────────────────────────────────────
 @router.get("/search/tv", response_model=list[ContentResponse])
 def buscar_tv(query: str, db: Session = Depends(get_db)):
-    # 1. Busca en nuestra BD primero
     locales = db.query(Content).filter(
         Content.title.ilike(f"%{query}%"),
         Content.type == "tv"
@@ -99,12 +103,10 @@ def buscar_tv(query: str, db: Session = Depends(get_db)):
     if locales:
         return locales
 
-    # 2. Si no está, busca en TMDB
     resultados = buscar_series(query)
     if not resultados:
         raise HTTPException(status_code=404, detail="No se encontraron series")
 
-    # 3. Guarda en nuestra BD y devuelve
     nuevos = []
     for item in resultados[:5]:
         existe = db.query(Content).filter(Content.tmdb_id == item["id"]).first()
@@ -112,7 +114,7 @@ def buscar_tv(query: str, db: Session = Depends(get_db)):
             nuevos.append(existe)
             continue
 
-        release = item.get("first_air_date", "1900-01-01")
+        release = item.get("first_air_date", "")
         nuevo = Content(
             tmdb_id=item["id"],
             title=item.get("name", ""),
@@ -123,11 +125,28 @@ def buscar_tv(query: str, db: Session = Depends(get_db)):
             rating=item.get("vote_average", 0.0)
         )
         db.add(nuevo)
+        db.flush()
+
+        for genre_id in item.get("genre_ids", []):
+            genero = db.query(Genre).filter(Genre.tmdb_id == genre_id).first()
+            if genero:
+                nuevo.genre.append(genero)
+
         db.commit()
         db.refresh(nuevo)
         nuevos.append(nuevo)
 
     return nuevos
+
+
+# ── Géneros de películas desde TMDB ────────────────────
+@router.get("/genre/movie/list")
+def generos_movie():
+    generos = generos_peliculas()
+    if not generos:
+        raise HTTPException(status_code=404, detail="No se encontraron géneros")
+    return generos
+
 
 # ── Detalle de película ─────────────────────────────────
 @router.get("/movie/{tmdb_id}")
@@ -156,15 +175,6 @@ def credits_movie(tmdb_id: int):
     return actores
 
 
-# ── Géneros de películas ────────────────────────────────
-@router.get("/genre/movie/list")
-def generos_movie():
-    generos = generos_peliculas()
-    if not generos:
-        raise HTTPException(status_code=404, detail="No se encontraron géneros")
-    return generos
-
-
 # ── Plataformas donde ver una película ─────────────────
 @router.get("/movie/{tmdb_id}/watch/providers")
 def providers_movie(tmdb_id: int):
@@ -183,12 +193,13 @@ def recomendaciones_movie(tmdb_id: int):
     return recomendaciones
 
 
-# ── Contenido guardado en nuestra BD ───────────────────
+# ── Todo el contenido guardado en nuestra BD ───────────
 @router.get("/", response_model=list[ContentResponse])
 def obtener_contenido(db: Session = Depends(get_db)):
     return db.query(Content).all()
 
 
+# ── Contenido por ID en nuestra BD ─────────────────────
 @router.get("/{id_content}", response_model=ContentResponse)
 def obtener_por_id(id_content: int, db: Session = Depends(get_db)):
     contenido = db.query(Content).filter(Content.id_content == id_content).first()
@@ -197,11 +208,12 @@ def obtener_por_id(id_content: int, db: Session = Depends(get_db)):
     return contenido
 
 
+# ── Eliminar contenido — solo admin ────────────────────
 @router.delete("/{id_content}")
 def eliminar_contenido(
     id_content: int,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    admin=Depends(verify_admin)
 ):
     contenido = db.query(Content).filter(Content.id_content == id_content).first()
     if not contenido:
@@ -209,4 +221,3 @@ def eliminar_contenido(
     db.delete(contenido)
     db.commit()
     return {"message": "Contenido eliminado correctamente"}
-
