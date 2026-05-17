@@ -6,6 +6,7 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse, Token
 from app.core.hash import hashear_password, verificar_password
 from app.core.jwt import crear_token
 import datetime
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -29,9 +30,16 @@ def register(usuario: UserCreate, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(credenciales: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == credenciales.email).first()
-
     if not user or not verificar_password(credenciales.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    token = crear_token(data={"sub": str(user.id_user)})
+    return {"access_token": token, "token_type": "bearer"}
 
+
+@router.post("/token", response_model=Token, include_in_schema=False)
+def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verificar_password(form_data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     token = crear_token(data={"sub": str(user.id_user)})
     return {"access_token": token, "token_type": "bearer"}

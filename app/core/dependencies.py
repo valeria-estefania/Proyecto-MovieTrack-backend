@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.jwt import verificar_token
 from app.db.db import get_db
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     try:
