@@ -4,7 +4,6 @@ from enum import Enum
 
 class StatusEnum(str, Enum):
     visto = "visto"
-    no_visto = "no visto"
     pendiente = "pendiente"
 
 class DisplayStatusBase(BaseModel):
