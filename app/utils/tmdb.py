@@ -60,3 +60,45 @@ def recomendaciones_pelicula(tmdb_id: int) -> list:
     params = {"language": "es-ES"}
     response = httpx.get(url, headers=HEADERS, params=params)
     return response.json().get("results", [])
+
+def peliculas_populares() -> list:
+    url = f"{TMDB_BASE_URL}/movie/popular"
+    params = {"language": "es-ES", "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def peliculas_mejor_valoradas() -> list:
+    url = f"{TMDB_BASE_URL}/movie/top_rated"
+    params = {"language": "es-ES", "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def peliculas_recientes() -> list:
+    url = f"{TMDB_BASE_URL}/movie/now_playing"
+    params = {"language": "es-ES", "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def series_populares() -> list:
+    url = f"{TMDB_BASE_URL}/tv/popular"
+    params = {"language": "es-ES", "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def series_mejor_valoradas() -> list:
+    url = f"{TMDB_BASE_URL}/tv/top_rated"
+    params = {"language": "es-ES", "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def peliculas_por_genero(genre_id: int) -> list:
+    url = f"{TMDB_BASE_URL}/discover/movie"
+    params = {"language": "es-ES", "with_genres": genre_id, "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+
+def series_por_genero(genre_id: int) -> list:
+    url = f"{TMDB_BASE_URL}/discover/tv"
+    params = {"language": "es-ES", "with_genres": genre_id, "page": 1}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
