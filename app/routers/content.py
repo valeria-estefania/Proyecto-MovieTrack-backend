@@ -10,8 +10,12 @@ from app.utils.tmdb import (
     buscar_peliculas, buscar_series,
     detalle_pelicula, detalle_serie,
     actores_pelicula, generos_peliculas,
-    plataformas_pelicula, recomendaciones_pelicula
+    plataformas_pelicula, recomendaciones_pelicula,
+    peliculas_populares, peliculas_mejor_valoradas, peliculas_recientes,
+    series_populares, series_mejor_valoradas,
+    peliculas_por_genero, series_por_genero
 )
+
 from datetime import datetime
 
 router = APIRouter(prefix="/content", tags=["Content"])
@@ -221,3 +225,45 @@ def eliminar_contenido(
     db.delete(contenido)
     db.commit()
     return {"message": "Contenido eliminado correctamente"}
+
+
+# ── Películas populares ─────────────────────────────────
+@router.get("/movie/popular")
+def movies_popular():
+    return peliculas_populares()
+
+
+# ── Películas mejor valoradas ───────────────────────────
+@router.get("/movie/top_rated")
+def movies_top_rated():
+    return peliculas_mejor_valoradas()
+
+
+# ── Películas en cines ──────────────────────────────────
+@router.get("/movie/now_playing")
+def movies_now_playing():
+    return peliculas_recientes()
+
+
+# ── Series populares ────────────────────────────────────
+@router.get("/tv/popular")
+def tv_popular():
+    return series_populares()
+
+
+# ── Series mejor valoradas ──────────────────────────────
+@router.get("/tv/top_rated")
+def tv_top_rated():
+    return series_mejor_valoradas()
+
+
+# ── Películas por género ────────────────────────────────
+@router.get("/movie/genre/{genre_id}")
+def movies_by_genre(genre_id: int):
+    return peliculas_por_genero(genre_id)
+
+
+# ── Series por género ───────────────────────────────────
+@router.get("/tv/genre/{genre_id}")
+def tv_by_genre(genre_id: int):
+    return series_por_genero(genre_id)
