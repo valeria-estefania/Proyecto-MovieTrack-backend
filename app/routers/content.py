@@ -20,7 +20,6 @@ from datetime import datetime
 
 router = APIRouter(prefix="/content", tags=["Content"])
 
-
 # ── Filtros avanzados ───────────────────────────────────
 @router.get("/filter", response_model=list[ContentResponse])
 def filtrar_contenido(
@@ -49,6 +48,57 @@ def filtrar_contenido(
         raise HTTPException(status_code=404, detail="No se encontraron resultados")
 
     return resultados
+
+
+# ── Géneros de películas desde TMDB ────────────────────
+@router.get("/genre/movie/list")
+def generos_movie():
+    generos = generos_peliculas()
+    if not generos:
+        raise HTTPException(status_code=404, detail="No se encontraron géneros")
+    return generos
+
+
+# ── Películas populares ─────────────────────────────────
+@router.get("/movie/popular")
+def movies_popular():
+    return peliculas_populares()
+
+
+# ── Películas mejor valoradas ───────────────────────────
+@router.get("/movie/top_rated")
+def movies_top_rated():
+    return peliculas_mejor_valoradas()
+
+
+# ── Películas en cines ──────────────────────────────────
+@router.get("/movie/now_playing")
+def movies_now_playing():
+    return peliculas_recientes()
+
+
+# ── Series populares ────────────────────────────────────
+@router.get("/tv/popular")
+def tv_popular():
+    return series_populares()
+
+
+# ── Series mejor valoradas ──────────────────────────────
+@router.get("/tv/top_rated")
+def tv_top_rated():
+    return series_mejor_valoradas()
+
+
+# ── Películas por género ────────────────────────────────
+@router.get("/movie/genre/{genre_id}")
+def movies_by_genre(genre_id: int):
+    return peliculas_por_genero(genre_id)
+
+
+# ── Series por género ───────────────────────────────────
+@router.get("/tv/genre/{genre_id}")
+def tv_by_genre(genre_id: int):
+    return series_por_genero(genre_id)
 
 
 # ── Buscar películas ────────────────────────────────────
@@ -143,15 +193,6 @@ def buscar_tv(query: str, db: Session = Depends(get_db)):
     return nuevos
 
 
-# ── Géneros de películas desde TMDB ────────────────────
-@router.get("/genre/movie/list")
-def generos_movie():
-    generos = generos_peliculas()
-    if not generos:
-        raise HTTPException(status_code=404, detail="No se encontraron géneros")
-    return generos
-
-
 # ── Detalle de película ─────────────────────────────────
 @router.get("/movie/{tmdb_id}")
 def detalle_movie(tmdb_id: int):
@@ -227,43 +268,3 @@ def eliminar_contenido(
     return {"message": "Contenido eliminado correctamente"}
 
 
-# ── Películas populares ─────────────────────────────────
-@router.get("/movie/popular")
-def movies_popular():
-    return peliculas_populares()
-
-
-# ── Películas mejor valoradas ───────────────────────────
-@router.get("/movie/top_rated")
-def movies_top_rated():
-    return peliculas_mejor_valoradas()
-
-
-# ── Películas en cines ──────────────────────────────────
-@router.get("/movie/now_playing")
-def movies_now_playing():
-    return peliculas_recientes()
-
-
-# ── Series populares ────────────────────────────────────
-@router.get("/tv/popular")
-def tv_popular():
-    return series_populares()
-
-
-# ── Series mejor valoradas ──────────────────────────────
-@router.get("/tv/top_rated")
-def tv_top_rated():
-    return series_mejor_valoradas()
-
-
-# ── Películas por género ────────────────────────────────
-@router.get("/movie/genre/{genre_id}")
-def movies_by_genre(genre_id: int):
-    return peliculas_por_genero(genre_id)
-
-
-# ── Series por género ───────────────────────────────────
-@router.get("/tv/genre/{genre_id}")
-def tv_by_genre(genre_id: int):
-    return series_por_genero(genre_id)
