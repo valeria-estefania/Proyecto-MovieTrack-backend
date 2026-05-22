@@ -6,10 +6,9 @@ class Display_status(Base):
     __tablename__ = "display_status"
 
     id_status: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    id_user: Mapped[int] = mapped_column(ForeignKey("user.id_user"))
+    id_user: Mapped[int] = mapped_column(ForeignKey("user.id_user", ondelete="CASCADE"))
     id_content: Mapped[int] = mapped_column(ForeignKey("content.id_content"))
-    status: Mapped[str] = mapped_column(Enum("visto", "pendiente", name="status_type"),nullable=False
-)
+    status: Mapped[str] = mapped_column(Enum("visto", "pendiente", name="status_type"), nullable=False)
 
     user: Mapped["User"] = relationship(back_populates="status")
     content: Mapped["Content"] = relationship(back_populates="status")

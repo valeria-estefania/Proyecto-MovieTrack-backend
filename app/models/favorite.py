@@ -6,10 +6,10 @@ from datetime import date
 class Favorite(Base):
     __tablename__ = "favorite"
 
-    id_favorite : Mapped[int] = mapped_column(primary_key=True, autoincrement= True)
-    id_user : Mapped[int] = mapped_column(ForeignKey("user.id_user"))
+    id_favorite : Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id_user : Mapped[int] = mapped_column(ForeignKey("user.id_user", ondelete="CASCADE"))
     id_content : Mapped[int] = mapped_column(ForeignKey("content.id_content"))
     date_added : Mapped[date] = mapped_column(Date)
 
-    user : Mapped["User"] = relationship(back_populates= "favorite")
+    user : Mapped["User"] = relationship(back_populates="favorite")
     content : Mapped["Content"] = relationship(back_populates="favorite")
