@@ -19,3 +19,31 @@ class ReviewResponse(ReviewBase):
     date: date
 
     model_config = ConfigDict(from_attributes=True)
+
+# Schema enriquecido para el panel admin
+class UserSummary(BaseModel):
+    id_user: int
+    name: str
+    email: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ContentSummary(BaseModel):
+    id_content: int
+    title: str
+    type: str
+    poster_url: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ReviewWithContext(BaseModel):
+    id_review: int
+    score: int
+    comment: str
+    date: date
+    id_content: int
+    id_user: int
+    user: UserSummary
+    content: ContentSummary
+
+    model_config = ConfigDict(from_attributes=True)
