@@ -149,7 +149,6 @@ def contenido_con_stats(
     db: Session = Depends(get_db),
     admin=Depends(verify_admin)
 ):
-    # Conteo de favoritos por contenido
     favoritos_subq = (
         db.query(
             Favorite.id_content,
@@ -159,7 +158,6 @@ def contenido_con_stats(
         .subquery()
     )
 
-    # Promedio de score de reviews por contenido
     rating_subq = (
         db.query(
             Review.id_content,
@@ -201,6 +199,90 @@ def contenido_con_stats(
 
 
 # ─────────────────────────────────────────────
+# Top 10 por favoritos
+# ─────────────────────────────────────────────
+@router.get("/top/favoritos")
+def top_por_favoritos(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    favoritos_subq = (
+        db.query(
+            Favorite.id_content,
+            func.count(Favorite.id_favorite).label("total_favoritos")
+        )
+        .group_by(Favorite.id_content)
+        .subquery()
+    )
+
+    resultados = (
+        db.query(
+            Content,
+            func.coalesce(favoritos_subq.c.total_favoritos, 0).label("total_favoritos"),
+        )
+        .outerjoin(favoritos_subq, Content.id_content == favoritos_subq.c.id_content)
+        .order_by(func.coalesce(favoritos_subq.c.total_favoritos, 0).desc())
+        .limit(10)
+        .all()
+    )
+
+    return [
+        {
+            "id_content": c.id_content,
+            "title": c.title,
+            "type": c.type,
+            "poster_url": c.poster_url,
+            "total_favoritos": total_fav,
+        }
+        for c, total_fav in resultados
+    ]
+
+
+# ─────────────────────────────────────────────
+# Top 10 por rating de reviews
+# ─────────────────────────────────────────────
+@router.get("/top/reviews")
+def top_por_reviews(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    rating_subq = (
+        db.query(
+            Review.id_content,
+            func.avg(Review.score).label("avg_score"),
+            func.count(Review.id_review).label("total_reviews")
+        )
+        .group_by(Review.id_content)
+        .having(func.count(Review.id_review) >= 3)
+        .subquery()
+    )
+
+    resultados = (
+        db.query(
+            Content,
+            rating_subq.c.avg_score,
+            rating_subq.c.total_reviews,
+        )
+        .join(rating_subq, Content.id_content == rating_subq.c.id_content)
+        .order_by(rating_subq.c.avg_score.desc())
+        .limit(10)
+        .all()
+    )
+
+    return [
+        {
+            "id_content": c.id_content,
+            "title": c.title,
+            "type": c.type,
+            "poster_url": c.poster_url,
+            "avg_score": round(float(avg_score), 1),
+            "total_reviews": total_rev,
+        }
+        for c, avg_score, total_rev in resultados
+    ]
+
+
+# ─────────────────────────────────────────────
 # Estadísticas generales
 # ─────────────────────────────────────────────
 @router.get("/stats")
@@ -229,3 +311,107 @@ def estadisticas(
         "contenido_visto": contenido_visto,
         "contenido_pendiente": contenido_pendiente,
     }
+
+# ─────────────────────────────────────────────
+# Distribución de scores de reviews
+# ─────────────────────────────────────────────
+@router.get("/stats/scores")
+def distribucion_scores(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    resultados = (
+        db.query(
+            Review.score,
+            func.count(Review.id_review).label("total")
+        )
+        .group_by(Review.score)
+        .order_by(Review.score.asc())
+        .all()
+    )
+
+    # Garantiza que los 10 valores (1-10) siempre estén presentes
+    scores_map = {score: total for score, total in resultados}
+    return [
+        {"score": i, "total": scores_map.get(i, 0)}
+        for i in range(1, 11)
+    ]
+
+# ─────────────────────────────────────────────
+# Usuarios más activos (por reviews escritas)
+# ─────────────────────────────────────────────
+@router.get("/stats/usuarios-activos")
+def usuarios_mas_activos(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    resultados = (
+        db.query(
+            User.id_user,
+            User.name,
+            User.email,
+            func.count(Review.id_review).label("total_reviews")
+        )
+        .join(Review, Review.id_user == User.id_user)
+        .group_by(User.id_user, User.name, User.email)
+        .order_by(func.count(Review.id_review).desc())
+        .limit(10)
+        .all()
+    )
+
+    return [
+        {
+            "id_user": id_user,
+            "name": name,
+            "email": email,
+            "total_reviews": total_reviews,
+        }
+        for id_user, name, email, total_reviews in resultados
+    ]
+
+
+# ─────────────────────────────────────────────
+# Registros de usuarios por mes
+# ─────────────────────────────────────────────
+@router.get("/stats/registros-por-mes")
+def registros_por_mes(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    resultados = (
+        db.query(
+            func.to_char(User.fecha_registro, "YYYY-MM").label("mes"),
+            func.count(User.id_user).label("total")
+        )
+        .group_by(func.to_char(User.fecha_registro, "YYYY-MM"))
+        .order_by(func.to_char(User.fecha_registro, "YYYY-MM").asc())
+        .all()
+    )
+
+    return [
+        {"mes": mes, "total": total}
+        for mes, total in resultados
+    ]
+
+# ─────────────────────────────────────────────
+# Favoritos por tipo de contenido (movie vs tv)
+# ─────────────────────────────────────────────
+@router.get("/stats/favoritos-por-tipo")
+def favoritos_por_tipo(
+    db: Session = Depends(get_db),
+    admin=Depends(verify_admin)
+):
+    resultados = (
+        db.query(
+            Content.type,
+            func.count(Favorite.id_favorite).label("total")
+        )
+        .join(Favorite, Favorite.id_content == Content.id_content)
+        .group_by(Content.type)
+        .all()
+    )
+
+    return [
+        {"type": tipo, "total": total}
+        for tipo, total in resultados
+    ]
