@@ -27,3 +27,33 @@ class UserResponse(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class FavoriteInProfile(BaseModel):
+    id_favorite: int
+    id_content: int
+    date_added: date
+    model_config = ConfigDict(from_attributes=True)
+
+class ReviewInProfile(BaseModel):
+    id_review: int
+    id_content: int
+    score: int
+    comment: str
+    date: date
+    model_config = ConfigDict(from_attributes=True)
+
+class StatusInProfile(BaseModel):
+    id_status: int
+    id_content: int
+    status: str
+    model_config = ConfigDict(from_attributes=True)
+
+class UserProfileResponse(BaseModel):
+    id_user: int
+    name: str
+    email: EmailStr
+    fecha_registro: date
+    favorites: list[FavoriteInProfile]
+    reviews: list[ReviewInProfile]
+    statuses: list[StatusInProfile]
+    model_config = ConfigDict(from_attributes=True)
