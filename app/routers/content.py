@@ -101,6 +101,13 @@ def tv_by_genre(genre_id: int):
     return series_por_genero(genre_id)
 
 
+# ── Plataformas disponibles ─────────────────────────────
+@router.get("/discover/{type}/platform/{provider_id}")
+def discover_by_platform(type: str, provider_id: int):
+    from app.utils.tmdb import descubrir_por_plataforma
+    return descubrir_por_plataforma(provider_id, type)
+
+
 # ── Buscar películas ────────────────────────────────────
 @router.get("/search/movie", response_model=list[ContentResponse])
 def buscar_movie(query: str, db: Session = Depends(get_db)):
