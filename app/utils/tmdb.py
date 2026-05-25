@@ -103,6 +103,12 @@ def series_por_genero(genre_id: int) -> list:
     response = httpx.get(url, headers=HEADERS, params=params)
     return response.json().get("results", [])
 
+def obtener_plataformas() -> list:
+    url = f"{TMDB_BASE_URL}/watch/providers/movie"
+    params = {"language": "es-ES", "watch_region": "CO"}
+    response = httpx.get(url, headers=HEADERS, params=params)
+    return response.json().get("results", [])
+                               
 def descubrir_por_plataforma(provider_id: int, type: str = "movie") -> list:
     endpoint = "movie" if type == "movie" else "tv"
     url = f"{TMDB_BASE_URL}/discover/{endpoint}"
