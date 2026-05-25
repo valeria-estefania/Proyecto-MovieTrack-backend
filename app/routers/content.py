@@ -102,6 +102,11 @@ def tv_by_genre(genre_id: int):
 
 
 # ── Plataformas disponibles ─────────────────────────────
+@router.get("/tmdb/providers")
+def get_providers():
+    from app.utils.tmdb import obtener_plataformas
+    return obtener_plataformas()
+
 @router.get("/discover/{type}/platform/{provider_id}")
 def discover_by_platform(type: str, provider_id: int):
     from app.utils.tmdb import descubrir_por_plataforma
